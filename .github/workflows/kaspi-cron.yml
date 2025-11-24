@@ -1,0 +1,43 @@
+name: Kaspi Service Cron
+
+on:
+  schedule:
+    # Каждые 30 минут круглосуточно
+    - cron: '0,30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  run-kaspi-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run main.py
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          KASPI_API_URL: ${{ secrets.KASPI_API_URL }}
+          KASPI_CONTENT_TYPE: ${{ secrets.KASPI_CONTENT_TYPE }}
+          KASPI_AUTH_TOKEN: ${{ secrets.KASPI_AUTH_TOKEN }}
+          KASPI_USER_AGENT: ${{ secrets.KASPI_USER_AGENT }}
+          # Add other secrets as needed
+        run: |
+          python main.py
